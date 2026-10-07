@@ -1,41 +1,24 @@
 import { useState } from "react";
 import "./App.css";
+import { TASK_HP_RECOVERY, TASK_REWARD } from "./studyState";
+import type { StudyTask } from "./studyState";
 
-export default function ToDoList() {
-  const [items, setItems] = useState([
-    "Lock in time",
-    "Read Chapters 2-3",
-    "Write new Draft",
-  ]);
+interface Props {
+  items: StudyTask[];
+  onAdd: (name: string) => void;
+  onComplete: (id: number) => void;
+  onRemove: (id: number) => void;
+}
+
+export default function ToDoList({ items, onAdd, onComplete, onRemove }: Props) {
   const [newItem, setNewItem] = useState("");
-  const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>(
-    () =>
-      items.reduce((acc, item) => {
-        acc[item] = false;
-        return acc;
-      }, {} as Record<string, boolean>)
-  );
 
   const addItem = (event: React.FormEvent) => {
     event.preventDefault();
     if (!newItem.trim()) return;
 
-    setItems((prev) => [...prev, newItem]);
-    setCheckedItems((prev) => ({ ...prev, [newItem]: false }));
+    onAdd(newItem.trim());
     setNewItem("");
-  };
-
-  const checkItem = (item: string) => {
-    setCheckedItems((prev) => ({ ...prev, [item]: !prev[item] }));
-  };
-
-  const removeItem = (item: string) => {
-    setItems((prev) => prev.filter((i) => i !== item));
-    setCheckedItems((prev) => {
-      const copy = { ...prev };
-      delete copy[item];
-      return copy;
-    });
   };
 
   return (
@@ -43,10 +26,12 @@ export default function ToDoList() {
       <div className="todolist-logo">
         <h1>Goober To Do List</h1>
       </div>
+      <p>Complete a task to earn ${TASK_REWARD} and restore up to {TASK_HP_RECOVERY} HP.</p>
 
       <form className="Add-item" onSubmit={addItem}>
         <input
           type="text"
+          aria-label="New task"
           value={newItem}
           onChange={(e) => setNewItem(e.target.value)}
         />
@@ -64,20 +49,21 @@ export default function ToDoList() {
         }}
       >
         {items.map((item) => (
-          <li key={item} className="todolist-item">
+          <li key={item.id} className="todolist-item">
             <div className="wrapper">
               <input
                 type="checkbox"
-                id={`checkbox-${item}`}
-                name={item}
-                checked={checkedItems[item]}
-                onChange={() => checkItem(item)}
+                id={`checkbox-${item.id}`}
+                name={item.name}
+                checked={item.completed}
+                disabled={item.completed}
+                onChange={() => onComplete(item.id)}
               />
-              <label htmlFor={`checkbox-${item}`}>{item}</label>
+              <label htmlFor={`checkbox-${item.id}`}>{item.name}</label>
             </div>
             <button
               className="todolist-trashbutton"
-              onClick={() => removeItem(item)}
+              onClick={() => onRemove(item.id)}
             >
               Del
             </button>
